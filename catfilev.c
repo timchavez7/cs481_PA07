@@ -34,20 +34,13 @@ int main(int argc, char **argv) {
     fseek(fp, 1024 * (inode.i_block[0]), SEEK_SET);
     int fileSize = inode.i_size;
     int index = 0;
+
+    // Print out file contents
     while (((current = getc(fp)) != EOF) && (index < fileSize )) {
         printf("%c", current);
         index ++;
     }
-
-
-    // Get superblock
-    // superblock contains group descriptor
-    // GD has blocks that are 1024 bytes large AKA 400 hex
-    // --- each block is 400 hex byets
-    // Its fifth block contains the location of all of the inodes
-    // -- the fifth block at 1400 hex
-    // Each inode location is offset by a certain amount within that block (in this case could be 128 bytes
-    // To get to inode 1 then 1400 + (80 * (i - 1))
+    printf("\n");
 
     return 0;
 }
