@@ -66,5 +66,14 @@ int main(int argc, char **argv) {
     read(fd, &super, sizeof(super));
     block_size = 1024 << super.s_log_block_size; // Get block size
 
+    // Get superblock
+    // superblock contains group descriptor
+    // GD has blocks that are 1024 bytes large AKA 400 hex
+    // --- each block is 400 hex byets
+    // Its fifth block contains the location of all of the inodes
+    // -- the fifth block at 1400 hex
+    // Each inode location is offset by a certain amount within that block (in this case could be 128 bytes
+    // To get to inode 1 then 1400 + (80 * (i - 1))
+
 return 0;
 }
