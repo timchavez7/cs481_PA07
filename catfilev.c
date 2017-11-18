@@ -53,18 +53,107 @@ __le32 s_first_meta_bg; /* First metablock block group */
 __u32 s_reserved[190]; /* Padding to the end of the block */
 };
 
+struct ext2_group_desc
+{
+__le32 bg_block_bitmap;      /* Blocks bitmap block */
+__le32 bg_inode_bitmap;      /* Inodes bitmap block */
+__le32 bg_inode_table;       /* Inodes table block */
+__le16 bg_free_blocks_count; /* Free blocks count */
+__le16 bg_free_inodes_count; /* Free inodes count */
+__le16 bg_used_dirs_count; /* Directories count */
+__le16 bg_pad;
+__le32 bg_reserved[3];
+};
+
+struct ext2_inode {
+__le16 i_mode;       /* File mode */
+__le16 i_uid;        /* Low 16 bits of Owner Uid */
+__le32 i_size;       /* Size in bytes */
+__le32 i_atime; /* Access time */
+__le32 i_ctime; /* Creation time */
+__le32 i_mtime; /* Modification time */
+__le32 i_dtime; /* Deletion Time */
+__le16 i_gid;        /* Low 16 bits of Group Id */
+__le16 i_links_count; /* Links count */
+__le32 i_blocks; /* Blocks count */
+__le32 i_flags; /* File flags */
+union {
+         struct {
+             __le32 l_i_reserved1;
+         } linux1;
+         struct {
+             __le32 h_i_translator;
+         } hurd1;
+         struct {
+             __le32 m_i_reserved1;
+         } masix1;
+} osd1;              /* OS dependent 1 */
+__le32 i_block[EXT2_N_BLOCKS];/* Pointers to blocks */
+__le32 i_generation; /* File version (for NFS) */
+__le32 i_file_acl; /* File ACL */
+__le32 i_dir_acl; /* Directory ACL */
+__le32 i_faddr; /* Fragment address */
+union {
+         struct {
+             __u8 l_i_frag; /* Fragment number */
+             __u8 l_i_fsize; /* Fragment size */
+             __u16 i_pad1;
+             __le16 l_i_uid_high; /* these 2 fields */
+             __le16 l_i_gid_high; /* were reserved2[0] */
+             __u32 l_i_reserved2;
+         } linux2;
+         struct {
+             __u8 h_i_frag; /* Fragment number */
+             __u8 h_i_fsize; /* Fragment size */
+             __le16 h_i_mode_high;
+             __le16 h_i_uid_high;
+             __le16 h_i_gid_high;
+             __le32 h_i_author;
+         } hurd2;
+         struct {
+             __u8 m_i_frag; /* Fragment number */
+             __u8 m_i_fsize; /* Fragment size */
+             __u16 m_pad1;
+             __u32 m_i_reserved2[2];
+         } masix2;
+} osd2;              /* OS dependent 2 */
+};
+
 int main(int argc, char **argv) {
+    int inodeNum = 0;
+    struct ext2_super_block super;
+    struct ext2_group_desc groupDesc;
+    struct ext2_inode inode;
+    unsigned char char_buffer[1024];
+    FILE *fp;
+
+    if (argc < 3) {
+        printf("ERROR: need inode number and disk image name\n");
+        return 0;
+    }
     //inode number 
-   int inodeNum = argv[1];
+    int inodeNum = argv[1];
 
     // Get file system to read
-    struct ext2_super_block super;
-    FILE *fp;
     fp = fopen(argv[2],"r");
     
-    lseek(fd, 1024, SEEK_SET);
-    read(fd, &super, sizeof(super));
-    block_size = 1024 << super.s_log_block_size; // Get block size
+    // lseek(fd, 1024, SEEK_SET);
+    // read(fd, &super, sizeof(super));
+    // block_size = 1024 << super.s_log_block_size; // Get block size
+
+    fseek(fp, 1024, SEEK_SET);
+    fread(&super, sizeof(super), 1, fp);
+
+    fseek(fp, 5120, SEEK_SET);
+    fread(&groupDesc, sizeof(groupDesc), 1, fp);
+
+    fseek(fp, (128 * (inodeNum - 1)), SEEK_CUR);
+    fread(&inode, sizeof(inode), 1 fp);
+
+    fseek(fp, 1024 * (inode.i_block[0]), SEEK_SET);
+    fread(char_buffer, 1, 1024, fp);
+
+    printf(char_buffer);
 
     // Get superblock
     // superblock contains group descriptor
@@ -75,5 +164,5 @@ int main(int argc, char **argv) {
     // Each inode location is offset by a certain amount within that block (in this case could be 128 bytes
     // To get to inode 1 then 1400 + (80 * (i - 1))
 
-return 0;
+    return 0;
 }
